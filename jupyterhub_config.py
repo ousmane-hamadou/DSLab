@@ -100,7 +100,7 @@ async def pre_spawn_hook(spawner):
     }
 
     # --- C. Gestion des Volumes (Personnel + Partagé) ---
-    user_workdir = f"/home/ousmaneh/workspaces/{user_uuid}"
+    user_workdir = f"/home/lisa/workspaces/{user_uuid}"
     if not os.path.exists(user_workdir):
         os.makedirs(user_workdir, mode=0o755)
 
