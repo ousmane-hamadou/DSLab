@@ -95,9 +95,9 @@ async def pre_spawn_hook(spawner):
     spawner.mem_limit = row[1]
 
     # --- B. Isolation Racine 80G (XFS Project Quota) ---
-    spawner.extra_host_config = {
-        "storage_opt": {"size": "1G"}
-    }
+    # spawner.extra_host_config = {
+    #     "storage_opt": {"size": "80G"}
+    # }
 
     # --- C. Gestion des Volumes (Personnel + Partagé) ---
     user_workdir = f"/home/lisa/workspaces/{user_uuid}"
