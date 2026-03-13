@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <title>DSLab - Demande de Ressources</title>
+  </head>
+  <body>
+    <main class="container">
+      <article>
+        <header>
+          <h2>DSLab</h2>
+          <p>Soumettre une demande pour un environnement de calcul</p>
+        </header>
+        <form action="/submit" method="post">
+          <label for="email">Email Universitaire</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="votre.nom@univ-ndere.cm"
+            required
+          />
+
+          <label for="project_desc">Description du Projet</label>
+          <textarea
+            id="project_desc"
+            name="project_desc"
+            placeholder="Décrivez vos besoins..."
+            required
+          ></textarea>
+
+          <div class="grid">
+            <label for="cpu"
+              >CPU (Cœurs entiers)
+              <select id="cpu" name="cpu">
+                <option value="1">1 CPU</option>
+                <option value="2">2 CPU</option>
+                <option value="4">4 CPU</option>
+                <option value="8">8 CPU</option>
+              </select>
+            </label>
+
+            <label for="ram"
+              >RAM (Jusqu'à 26 Go)
+              <select id="ram" name="ram">
+                <option value="2G">2 Go</option>
+                <option value="4G">4 Go</option>
+                <option value="8G">8 Go</option>
+                <option value="16G">16 Go</option>
+                <option value="26G">26 Go</option>
+              </select>
+            </label>
+          </div>
+
+          <button type="submit">Envoyer la demande</button>
+        </form>
+      </article>
+    </main>
+  </body>
+</html>

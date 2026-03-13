@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <title>Administration - DSLab</title>
+    <style>
+      :root {
+        --badge-cpu: #00897b;
+        --badge-ram: #1e88e5;
+      }
+      nav.container {
+        padding-left: 0;
+        padding-right: 0;
+        border-bottom: 1px solid var(--muted-border-color);
+      }
+
+      /* Amélioration de l'affichage des Ressources */
+      .resource-container {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        text-transform: uppercase;
+      }
+      .badge-cpu {
+        background-color: var(--badge-cpu);
+      }
+      .badge-ram {
+        background-color: var(--badge-ram);
+      }
+
+      /* Style des filtres */
+      .filter-group {
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      .filter-group label {
+        margin-bottom: 0;
+        font-weight: bold;
+      }
+
+      .hidden-row {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <nav>
+        <ul>
+          <li><strong>DSLab Admin</strong></li>
+        </ul>
+        <ul>
+          <li><a href="/" class="secondary">Home</a></li>
+          <li>
+            <a href="/logout" role="button" class="outline contrast"
+              >Déconnexion</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <main class="container">
+      <section id="admin-management" style="margin-top: 3rem">
+        <details>
+          <summary role="button" class="secondary outline">
+            <svg
+              viewBox="0 0 24 24"
+              style="
+                width: 18px;
+                height: 18px;
+                margin-right: 8px;
+                fill: currentColor;
+                vertical-align: middle;
+              "
+            >
+              <path
+                d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z"
+              />
+            </svg>
+            Ajouter un administrateur
+          </summary>
+
+          <article>
+            <form
+              id="addAdminForm"
+              onsubmit="
+                event.preventDefault();
+                submitNewAdmin();
+              "
+            >
+              <div class="grid">
+                <div>
+                  <label for="new_username">Identifiant</label>
+                  <input
+                    type="text"
+                    id="new_username"
+                    name="new_username"
+                    placeholder="ex: prof_dayang"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="new_password">Mot de passe</label>
+                  <input
+                    type="password"
+                    id="new_password"
+                    name="new_password"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <div>
+                  <label>&nbsp;</label>
+                  <button type="submit" id="addAdminBtn">
+                    Créer le compte
+                  </button>
+                </div>
+              </div>
+              <small id="adminMsg" style="display: none"></small>
+            </form>
+          </article>
+        </details>
+      </section>
+
+      <hgroup>
+        <h1>Gestion des Demandes</h1>
+        <h2>Surveillance des ressources du DSLab</h2>
+      </hgroup>
+
+      <section class="filter-group">
+        <label for="statusFilter">Afficher :</label>
+        <select id="statusFilter" onchange="filterTable()" style="width: auto">
+          <option value="all">Toutes les demandes</option>
+          <option value="pending">En attente uniquement</option>
+          <option value="approved">Approuvées uniquement</option>
+        </select>
+      </section>
+
+      <figure>
+        <table role="grid" id="requestsTable">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Projet</th>
+              <th>Allocation</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr
+              id="row-{{ req.id }}"
+              data-status="{{ 'approved' if req.is_approved else 'pending' }}"
+            >
+              <td>
+                <strong>{{ req.email }}</strong><br />
+                <small style="opacity: 0.6"
+                  >UUID: {{ req.user_uuid[:8] }}</small
+                >
+              </td>
+              <td>
+                <details>
+                  <summary>Détails du projet</summary>
+                  <p style="font-size: 0.9rem">{{ req.project_desc }}</p>
+                </details>
+              </td>
+              <td>
+                <div class="resource-container">
+                  <span class="badge badge-cpu" title="Processeurs"
+                    >⚡ {{ req.cpu }} Cores</span
+                  >
+                  <span class="badge badge-ram" title="Mémoire vive"
+                    >⚙️ {{ req.ram }}</span
+                  >
+                </div>
+              </td>
+              <td>
+                {% if not req.is_approved %}
+                <button
+                  id="btn-{{ req.id }}"
+                  class="primary small"
+                  onclick="approveAndOpenGmail('{{ req.id }}', '{{ req.email }}', '{{ req.user_uuid }}', '{{ req.cpu }}', '{{ req.ram }}')"
+                >
+                  Approuver
+                </button>
+                {% else %}
+                <span style="color: var(--badge-cpu)">✔ Validé</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" style="text-align: center">
+                Aucune donnée disponible.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </figure>
+    </main>
+
+    <script>
+      // Logique de filtrage dynamique
+      function filterTable() {
+        const filterValue = document.getElementById("statusFilter").value;
+        const rows = document.querySelectorAll("#requestsTable tbody tr");
+
+        rows.forEach((row) => {
+          const status = row.getAttribute("data-status");
+          if (filterValue === "all" || status === filterValue) {
+            row.classList.remove("hidden-row");
+          } else {
+            row.classList.add("hidden-row");
+          }
+        });
+      }
+
+      // Script d'approbation Gmail (Inchangé mais intégré)
+      async function approveAndOpenGmail(requestId, email, userUuid, cpu, ram) {
+        const btn = document.getElementById(`btn-${requestId}`);
+        btn.ariaBusy = "true";
+        btn.disabled = true;
+
+        try {
+          const response = await fetch(`/admin/approve/${requestId}`, {
+            method: "POST",
+          });
+          if (!response.ok) throw new Error("Erreur serveur.");
+
+          const accessUrl = `${window.location.origin}/session/${userUuid}`;
+          const subject = encodeURIComponent("[DSLab] Votre accès DSLab");
+          const body = encodeURIComponent(
+            `Bonjour,\n\n` +
+              `Votre demande de ressources pour le DSLab a été approuvée.\n\n` +
+              `--- Configuration allouée ---\n` +
+              `- CPU : ${cpu} Cores\n` +
+              `- RAM : ${ram}\n\n` +
+              `--- Accès à votre environnement ---\n` +
+              `Cliquez sur le lien suivant pour démarrer votre session Podman :\n` +
+              `${accessUrl}\n\n` +
+              `Identifiant de session : ${userUuid}\n\n` +
+              `Cordialement,\nL'administration DSLab.`,
+          );
+
+          window.open(
+            `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`,
+            "_blank",
+          );
+
+          // Mise à jour visuelle immédiate
+          const row = document.getElementById(`row-${requestId}`);
+          row.setAttribute("data-status", "approved"); // Important pour le filtre
+          row.cells[3].innerHTML =
+            '<span style="color: var(--badge-cpu);">✔ Validé</span>';
+
+          // Si le filtre "En attente" est actif, on cache la ligne
+          filterTable();
+        } catch (error) {
+          alert("Erreur : " + error.message);
+          btn.ariaBusy = "false";
+          btn.disabled = false;
+        }
+      }
+
+      async function submitNewAdmin() {
+        const btn = document.getElementById("addAdminBtn");
+        const msg = document.getElementById("adminMsg");
+        const username = document.getElementById("new_username").value;
+        const password = document.getElementById("new_password").value;
+
+        btn.ariaBusy = "true";
+        btn.disabled = true;
+
+        // Préparation des données au format URL-encoded
+        const formData = new URLSearchParams();
+        formData.append("new_username", username);
+        formData.append("new_password", password);
+
+        try {
+          const response = await fetch("/admin/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData,
+          });
+
+          if (response.ok) {
+            msg.textContent = "✔ Compte créé avec succès.";
+            msg.style.color = "var(--badge-cpu)";
+            msg.style.display = "block";
+            document.getElementById("addAdminForm").reset();
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Erreur de création");
+          }
+        } catch (error) {
+          msg.textContent = "❌ " + error.message;
+          msg.style.color = "var(--del-color)";
+          msg.style.display = "block";
+        } finally {
+          btn.ariaBusy = "false";
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <title>DSLab</title>
+    <style>
+      /* Couleurs personnalisées adaptatives */
+      :root {
+        --primary-custom: #1071e5;
+      }
+
+      /* Aligne le contenu du nav sur le container principal */
+      nav.container {
+        padding-left: 0;
+        padding-right: 0;
+        border-bottom: 1px solid var(--muted-border-color);
+      }
+
+      /* Hero section adaptative */
+      .hero-section {
+        padding: 5rem 0;
+        /* Utilisation de couleurs transparentes pour s'adapter au fond (light ou dark) */
+        background: linear-gradient(
+          to bottom,
+          var(--code-background-color),
+          transparent
+        );
+        border-radius: 0 0 2rem 2rem;
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      .feature-card {
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        height: 100%;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .cta-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2.5rem;
+      }
+
+      /* Ajustement pour mobile */
+      @media (max-width: 768px) {
+        .cta-group {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <nav>
+        <ul>
+          <li><strong>DSLab</strong></li>
+        </ul>
+        <ul>
+          <li><a href="/" class="secondary">Home</a></li>
+          <li><a href="/login" class="outline" role="button">Admin</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <header class="hero-section">
+      <div class="container">
+        <hgroup>
+          <h1 style="font-size: 3.5rem; margin-bottom: 1rem">
+            DSLab Cloud Computing
+          </h1>
+          <p style="font-size: 1.5rem; opacity: 0.9">
+            Infrastructure de recherche haute performance pour l'Université de
+            Ngaoundéré.
+          </p>
+        </hgroup>
+
+        <div class="cta-group">
+          <a href="/request" role="button">Demander un accès</a>
+          <a href="#features" class="secondary outline" role="button"
+            >Découvrir les ressources</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="features" style="padding-top: 2rem">
+        <div class="grid">
+          <article class="feature-card">
+            <header><mark>Puissance</mark></header>
+            <p>
+              Allocation flexible jusqu'à <strong>8 cœurs CPU</strong> et
+              <strong>26 Go de RAM</strong> pour vos simulations les plus
+              exigeantes.
+            </p>
+          </article>
+          <article class="feature-card">
+            <header><mark>Isolation</mark></header>
+            <p>
+              Grâce à <strong>Podman</strong> sur Fedora, profitez d'un
+              environnement sandboxé sans risque de conflit logiciel.
+            </p>
+          </article>
+          <article class="feature-card">
+            <header><mark>Simplicité</mark></header>
+            <p>
+              Un workflow transparent : soumission, approbation par les
+              professeurs, et accès instantané par lien sécurisé.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section style="margin-top: 4rem">
+        <article>
+          <div style="text-align: center; padding: 2rem">
+            <h3>Prêt à commencer vos recherches ?</h3>
+            <p>
+              Le laboratoire DSLab accompagne les étudiants en Master et
+              Doctorat dans leurs travaux de calcul distribué et science des
+              données.
+            </p>
+            <a href="/request" class="contrast"
+              >Remplir le formulaire de demande</a
+            >
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer
+      class="container"
+      style="
+        margin-top: 5rem;
+        padding: 2rem 0;
+        border-top: 1px solid var(--muted-border-color);
+        text-align: center;
+      "
+    >
+      <small>
+        <strong>DSLab v1.0</strong><br />
+        Département d'Informatique • Université de Ngaoundéré<br />
+        <em>Hébergé sur Fedora Server avec Podman</em>
+      </small>
+    </footer>
+  </body>
+</html>

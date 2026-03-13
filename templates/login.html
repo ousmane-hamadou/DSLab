@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <title>DSLab - Connexion</title>
+  </head>
+  <body>
+    <main class="container" style="max-width: 400px; margin-top: 100px">
+      <article>
+        <header><strong>Connexion Admin</strong></header>
+        <form action="/login" method="post">
+          <input type="text" name="username" placeholder="Admin" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Mot de passe"
+            required
+          />
+          <button type="submit">Se connecter</button>
+        </form>
+      </article>
+    </main>
+  </body>
+</html>
