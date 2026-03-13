@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+.env
+
+# Base de données (On ne versionne pas les données locales)
+*.db
+*.sqlite3
+
+# Dossiers de travail des étudiants (Volumes montés)
+workspaces/
+data/
+
+# Logs
+*.log
+logs/
+
+# Secrets et configuration locale
+.env.local
+.secret
+
+# Podman/Docker
+.nfs*
+
+# IDEs
+.vscode/
+.idea/

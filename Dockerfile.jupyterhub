@@ -1,0 +1,18 @@
+FROM quay.io/jupyterhub/jupyterhub:latest
+
+# Installation des dépendances Python nécessaires
+# On utilise --no-cache-dir pour garder l'image légère
+RUN pip install --no-cache-dir \
+    dockerspawner \
+    jupyterhub-idle-culler \
+    netifaces-plus
+
+# On s'assure que le répertoire de travail est correct
+WORKDIR /srv/jupyterhub
+
+# Copie optionnelle : Tu peux copier la config dans l'image ou continuer 
+# à utiliser un volume (préférable pour le développement)
+# COPY jupyterhub_config.py /srv/jupyterhub/jupyterhub_config.py
+
+# On garde l'utilisateur root par défaut pour pouvoir gérer le socket 
+# et lancer des processus, mais JupyterHub gèrera les accès

@@ -1,0 +1,50 @@
+services:
+  traefik:
+    privileged: true
+    image: traefik:latest
+    container_name: traefik
+    command:
+      # - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:8080"
+    ports:
+      - "8080:8080" # On mappe le port 80 (web) du conteneur sur le 8080 de l'hôte
+    volumes:
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
+
+  dslab-web:
+    build: .
+    container_name: dslab_web
+    volumes:
+      - /home/lisa/DSLab:/app/data:Z
+    env_file:
+      - .env
+    depends_on:
+      - traefik
+    labels:
+      # - "traefik.http.routers.api.rule=PathPrefix(`/`) && !PathPrefix(`/hub`) && !PathPrefix(`/user`)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.dslab.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.dslab.entrypoints=web"
+      - "traefik.http.services.dslab.loadbalancer.server.port=8090"
+
+  jupyterhub:
+    # On peut aussi conteneuriser JupyterHub ou le laisser sur l'hôte
+    # Si JupyterHub est sur l'hôte, on utilise un 'provider' file dans traefik
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyterhub
+    privileged: true
+    container_name: jupyterhub
+    entrypoint: >
+      sh -c "chmod 666 /var/run/docker.sock && 
+             jupyterhub -f /srv/jupyterhub/jupyterhub_config.py"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hub.rule=PathPrefix(`/hub`) || PathPrefix(`/user`)"
+      - "traefik.http.services.hub.loadbalancer.server.port=8000"
+    volumes:
+      - /home/lisa/DSLab/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:z
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
+      - /home/lisa/DSLab:/mnt/db:ro,z
