@@ -53,7 +53,9 @@ services:
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
       - /home/lisa/DSLab:/mnt/db:ro,z
     networks:
-      - dslab-net
+      dslab-net:
+        aliases:
+          - jupyterhub
 
 networks:
   dslab-net:
