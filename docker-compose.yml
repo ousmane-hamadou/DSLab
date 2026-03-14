@@ -3,6 +3,8 @@ services:
     privileged: true
     image: traefik:latest
     container_name: traefik
+    networks:
+      - dslab-net
     command:
       # - "--api.insecure=true"
       - "--providers.docker=true"
@@ -22,6 +24,8 @@ services:
       - .env
     depends_on:
       - traefik
+    networks:
+      - dslab-net
     labels:
       # - "traefik.http.routers.api.rule=PathPrefix(`/`) && !PathPrefix(`/hub`) && !PathPrefix(`/user`)"
       - "traefik.enable=true"
@@ -48,3 +52,10 @@ services:
       - /home/lisa/DSLab/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:z
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
       - /home/lisa/DSLab:/mnt/db:ro,z
+    networks:
+      - dslab-net
+
+networks:
+  dslab-net:
+    name: dslab-net # On force le nom ici
+    driver: bridge

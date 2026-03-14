@@ -14,7 +14,6 @@ c.JupyterHub.hub_connect_ip = docker_gw
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.DockerSpawner.hub_connect_ip_from_env = 'JUPYTERHUB_SERVICE_HOST'
 
-
 # --- 1. CONFIGURATION RÉSEAU ---
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = 8000
@@ -62,7 +61,8 @@ c.DockerSpawner.client_kwargs = {
 }
 
 # Configuration réseau du conteneur
-c.DockerSpawner.network_name = 'bridge'
+# c.DockerSpawner.network_name = 'bridge'
+c.DockerSpawner.network_name = 'dslab-net'
 c.DockerSpawner.use_internal_ip = True
 c.DockerSpawner.remove = True  # Supprime le conteneur à l'arrêt pour libérer la RAM
 
