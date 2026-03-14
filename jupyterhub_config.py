@@ -57,7 +57,7 @@ c.DockerSpawner.use_internal_ip = True
 c.DockerSpawner.extra_host_config = {
     "network_mode": network_name,
 }
-c.DockerSpawner.extra_create_kwargs = {'user': '1001:1001'}
+c.DockerSpawner.extra_create_kwargs = {'user': '0'}
 c.DockerSpawner.remove = False
 c.Spawner.start_timeout = 300
 c.Spawner.http_timeout = 180
@@ -105,6 +105,11 @@ async def pre_spawn_hook(spawner):
 
     # C. Environnement
     spawner.environment = {
+        "CHOWN_HOME": "yes",       # Active le chown au démarrage
+        "CHOWN_HOME_OPTS": "-R",   # Récursif
+        "NB_USER": "jovyan",       # L'utilisateur final après chown
+        "NB_UID": "1000",
+        "NB_GID": "100",
         "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
         "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api"
     }
