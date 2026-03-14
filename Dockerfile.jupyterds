@@ -1,0 +1,15 @@
+# Utilise l'image de base que tu utilises actuellement
+FROM quay.io/jupyter/datascience-notebook:latest
+
+# Passer en root pour installer des packages si nécessaire
+USER root
+
+# Installation des extensions de collaboration
+# jupyter-collaboration : Active le partage de documents en temps réel
+# jupyterlab-link-share : Facilite la création de liens de partage
+RUN pip install --no-cache-dir \
+    jupyter-collaboration \
+    jupyterlab-link-share
+
+# Revenir à l'utilisateur standard pour la sécurité
+USER ${NB_UID}

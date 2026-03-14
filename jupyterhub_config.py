@@ -7,19 +7,30 @@ from jupyterhub.auth import DummyAuthenticator
 c = get_config()
 
 # --- 1. CONFIGURATION RÉSEAU GÉNÉRALE ---
-# Port pour les utilisateurs (via Traefik/Ngrok)
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = 8000
+
 
 # Port pour l'API interne (Communication Hub <-> Notebooks)
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.hub_port = 8888
 
-# TRÈS IMPORTANT : Adresse DNS du Hub dans le réseau dslab-net
 # On utilise l'alias défini dans docker-compose au lieu d'une IP fixe
 c.JupyterHub.hub_connect_ip = 'jupyterhub'
 
-# --- 2. AUTHENTIFICATION CUSTOM ---
+# --- 2. CONFIGURATION DE LA COLLABORATION (TORNADO) ---
+c.JupyterHub.tornado_settings = {
+    'headers': {
+        'Content-Security-Policy': "frame-ancestors 'self' *"
+    },
+    'cookie_options': {
+        'SameSite': 'None',
+        # Change à True si tu installes un certificat SSL (HTTPS)
+        'Secure': False
+    }
+}
+
+# --- 3. AUTHENTIFICATION CUSTOM ---
 
 
 class MyAuthenticator(DummyAuthenticator):
@@ -39,9 +50,9 @@ c.Authenticator.allow_existing_users = True
 c.Authenticator.admin_users = {'lisa'}
 c.JupyterHub.allow_named_servers = True
 
-# --- 3. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
+# --- 4. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
-c.DockerSpawner.image = 'quay.io/jupyter/datascience-notebook:latest'
+c.DockerSpawner.image = 'dslab-collab:latest'
 
 # Socket Podman (Standard Fedora Rootless)
 c.DockerSpawner.client_kwargs = {
@@ -51,9 +62,12 @@ c.DockerSpawner.client_kwargs = {
 # Configuration du réseau dslab-net
 network_name = 'dslab-net'
 c.DockerSpawner.network_name = network_name
-# c.DockerSpawner.hub_connect_ip = network_name
 c.DockerSpawner.hub_connect_url = 'http://jupyterhub:8888/hub/api'
-c.DockerSpawner.args = ['--ip=0.0.0.0']
+c.DockerSpawner.args = [
+    '--ip=0.0.0.0',
+    '--port=8888',
+    '--LabApp.collaborative=True'
+]
 c.DockerSpawner.use_internal_ip = True
 
 # Options spécifiques pour Podman et la stabilité
@@ -61,7 +75,7 @@ c.DockerSpawner.extra_host_config = {
     "network_mode": network_name,
 }
 c.DockerSpawner.extra_create_kwargs = {'user': '0'}
-c.DockerSpawner.remove = False
+c.DockerSpawner.remove = True
 c.Spawner.start_timeout = 300
 c.Spawner.http_timeout = 180
 
@@ -95,8 +109,6 @@ async def pre_spawn_hook(spawner):
     spawner.cpu_limit = float(row[0])
     spawner.mem_limit = row[1]
 
-    # B. Gestion des Volumes (Personnel + Partagé)
-    # Note : Utilisation de l'UID de lisa (1000) pour les permissions
     user_workdir = f"/home/lisa/workspaces/{user_uuid}"
     if not os.path.exists(user_workdir):
         os.makedirs(user_workdir, mode=0o755, exist_ok=True)
