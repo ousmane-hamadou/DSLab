@@ -109,12 +109,6 @@ async def pre_spawn_hook(spawner):
         "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api"
     }
 
-    spawner.volumes = {
-        # Le Z est vital ici
-        user_workdir: {"bind": "/home/jovyan/work", "mode": "Z"},
-        "/opt/ds_shared_libs": {"bind": "/opt/shared", "mode": "ro"}
-    }
-
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
 
 # --- 5. SERVICES : IDLE CULLER ---
