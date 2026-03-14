@@ -51,6 +51,7 @@ c.DockerSpawner.client_kwargs = {
 # Configuration du réseau dslab-net
 network_name = 'dslab-net'
 c.DockerSpawner.network_name = network_name
+c.DockerSpawner.args = ['--ip=0.0.0.0']
 c.DockerSpawner.use_internal_ip = True
 
 # Options spécifiques pour Podman et la stabilité
@@ -111,7 +112,8 @@ async def pre_spawn_hook(spawner):
         "NB_UID": "1000",
         "NB_GID": "100",
         "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
-        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api"
+        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api",
+        "JUPYTER_IP": "0.0.0.0"
     }
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
