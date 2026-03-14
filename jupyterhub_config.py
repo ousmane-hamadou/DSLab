@@ -1,6 +1,7 @@
 import os
 import socket
 import sqlite3
+from urllib.parse import parse_qs, urlparse
 
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
@@ -64,12 +65,24 @@ c.JupyterHub.tornado_settings = {
 
 class MyAuthenticator(DummyAuthenticator):
     async def authenticate(self, handler, data=None):
-        # 1. On récupère l'UUID depuis les arguments de l'URL
+        # 1. Tentative directe (cas classique)
         username = handler.get_argument("username", None)
 
+        # 2. Si non trouvé, on cherche dans le paramètre 'next' (cas du lien partagé)
+        if not username:
+            next_url = handler.get_argument("next", None)
+            if next_url:
+                parsed_next = urlparse(next_url)
+                params = parse_qs(parsed_next.query)
+                # On cherche 'username' dans les query params de l'URL 'next'
+                if 'username' in params:
+                    username = params['username'][0]
+
         if username:
-            print(f"--- Login automatique pour l'UUID : {username} ---")
+            print(f"--- Authentification réussie pour : {username} ---")
             return {"name": username}
+
+        print("--- Échec : Aucun UUID trouvé dans l'URL ou le paramètre next ---")
         return None
 
 
@@ -89,6 +102,7 @@ c.JupyterHub.trusted_proxies = [
     network_info['gateway'],
     'traefik'
 ]
+c.JupyterHub.redirect_to_server = True
 # --- 4. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
 c.DockerSpawner.image = 'dslab-collab:latest'
@@ -172,7 +186,7 @@ async def pre_spawn_hook(spawner):
     }
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
-
+c.JupyterHub.shutdown_on_logout = True
 # --- 5. SERVICES : IDLE CULLER ---
 c.JupyterHub.services = [
     {
