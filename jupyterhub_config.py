@@ -13,7 +13,7 @@ c.JupyterHub.port = 8000
 
 # Port pour l'API interne (Communication Hub <-> Notebooks)
 c.JupyterHub.hub_ip = '0.0.0.0'
-c.JupyterHub.hub_port = 8081
+c.JupyterHub.hub_port = 8888
 
 # TRÈS IMPORTANT : Adresse DNS du Hub dans le réseau dslab-net
 # On utilise l'alias défini dans docker-compose au lieu d'une IP fixe
