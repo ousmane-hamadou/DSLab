@@ -1,10 +1,27 @@
 import os
+import socket
 import sqlite3
 
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
 
 c = get_config()
+
+# Récupérer dynamiquement l'IP interne du conteneur JupyterHub
+
+
+def get_hub_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # On n'a pas besoin de se connecter réellement, c'est juste pour router l'IP
+        s.connect(('8.8.8.8', 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
 
 # --- 1. CONFIGURATION RÉSEAU GÉNÉRALE ---
 c.JupyterHub.ip = '0.0.0.0'
@@ -21,7 +38,8 @@ c.JupyterHub.hub_connect_ip = 'jupyterhub'
 # --- 2. CONFIGURATION DE LA COLLABORATION (TORNADO) ---
 c.JupyterHub.tornado_settings = {
     'headers': {
-        'Content-Security-Policy': "frame-ancestors 'self' *"
+        'Content-Security-Policy': "frame-ancestors 'self' *",
+        'Access-Control-Allow-Origin': '*'
     },
     'cookie_options': {
         'SameSite': 'None',
@@ -50,6 +68,12 @@ c.Authenticator.any_allow_config = True
 c.Authenticator.allow_existing_users = True
 c.Authenticator.admin_users = {'lisa'}
 c.JupyterHub.allow_named_servers = True
+c.DockerSpawner.args.extend([
+    '--LabApp.collaborative=True',
+    '--ContentsManager.allow_hidden=True'
+])
+hub_ip_dynamique = get_hub_ip()
+c.JupyterHub.trusted_proxies = [hub_ip_dynamique, 'traefik']
 
 # --- 4. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'

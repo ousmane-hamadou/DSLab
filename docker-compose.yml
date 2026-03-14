@@ -48,6 +48,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.hub.rule=PathPrefix(`/hub`) || PathPrefix(`/user`)"
       - "traefik.http.services.hub.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.hub-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.hub.middlewares=hub-headers"
     volumes:
       - /home/lisa/DSLab/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:z
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
