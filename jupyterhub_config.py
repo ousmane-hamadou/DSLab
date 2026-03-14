@@ -58,7 +58,7 @@ c.DockerSpawner.extra_host_config = {
     "network_mode": network_name,
 }
 c.DockerSpawner.extra_create_kwargs = {'user': '1001:1001'}
-c.DockerSpawner.remove = True  # Nettoie le conteneur à l'arrêt
+c.DockerSpawner.remove = False
 c.Spawner.start_timeout = 300
 c.Spawner.http_timeout = 180
 
