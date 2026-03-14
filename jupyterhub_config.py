@@ -1,7 +1,7 @@
 import os
 import socket
 import sqlite3
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
@@ -49,6 +49,7 @@ c.JupyterHub.hub_connect_ip = 'jupyterhub'
 c.JupyterHub.allow_origin = '*'
 c.JupyterHub.bind_url = 'http://:8000'
 c.JupyterHub.trust_x_forwarded_headers = True
+c.JupyterHub.subdomain_host = 'https://unpressured-abrielle-coroneted.ngrok-free.dev'
 c.JupyterHub.tornado_settings = {
     'headers': {
         'Content-Security-Policy': "frame-ancestors 'self' *",
@@ -65,25 +66,32 @@ c.JupyterHub.tornado_settings = {
 
 class MyAuthenticator(DummyAuthenticator):
     async def authenticate(self, handler, data=None):
-        # 1. Tentative directe (cas classique)
+        # 1. Tentative directe : ?username=...
         username = handler.get_argument("username", None)
 
-        # 2. Si non trouvé, on cherche dans le paramètre 'next' (cas du lien partagé)
+        # 2. Si non trouvé, on fouille dans le paramètre 'next'
         if not username:
             next_url = handler.get_argument("next", None)
             if next_url:
-                parsed_next = urlparse(next_url)
+                decoded_next = unquote(next_url)
+                parsed_next = urlparse(decoded_next)
                 params = parse_qs(parsed_next.query)
-                # On cherche 'username' dans les query params de l'URL 'next'
+
                 if 'username' in params:
                     username = params['username'][0]
+                elif '/user/' in decoded_next:
+                    parts = decoded_next.split('/')
+                    username = parts[parts.index('user') + 1]
 
         if username:
-            print(f"--- Authentification réussie pour : {username} ---")
+            print(f"--- [AUTH SUCCESS] UUID détecté : {username} ---")
             return {"name": username}
 
-        print("--- Échec : Aucun UUID trouvé dans l'URL ou le paramètre next ---")
+        print("--- [AUTH FAILURE] Aucun UUID trouvé dans l'URL ---")
         return None
+
+
+c.JupyterHub.authenticator_class = MyAuthenticator
 
 
 c.JupyterHub.authenticator_class = MyAuthenticator

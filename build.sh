@@ -1,4 +1,4 @@
-Début#!/bin/bash
+#!/bin/bash
 
 # --- CONFIGURATION ---
 WORKSPACE_ROOT="/home/lisa/workspaces"
