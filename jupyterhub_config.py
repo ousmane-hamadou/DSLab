@@ -25,8 +25,7 @@ c.JupyterHub.tornado_settings = {
     },
     'cookie_options': {
         'SameSite': 'None',
-        # Change à True si tu installes un certificat SSL (HTTPS)
-        'Secure': False
+        'Secure': True
     }
 }
 
@@ -34,12 +33,14 @@ c.JupyterHub.tornado_settings = {
 
 
 class MyAuthenticator(DummyAuthenticator):
-    async def authenticate(self, handler, data):
-        # Récupération automatique du username (UUID) dans l'URL
+    async def authenticate(self, handler, data=None):
+        # 1. On récupère l'UUID depuis les arguments de l'URL
         username = handler.get_argument("username", None)
+
         if username:
+            print(f"--- Login automatique pour l'UUID : {username} ---")
             return {"name": username}
-        return await super().authenticate(handler, data)
+        return None
 
 
 c.JupyterHub.authenticator_class = MyAuthenticator
