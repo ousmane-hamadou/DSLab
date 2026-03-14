@@ -10,17 +10,26 @@ c = get_config()
 # Récupérer dynamiquement l'IP interne du conteneur JupyterHub
 
 
-def get_hub_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+def get_dynamic_network_info():
+    """Récupère l'IP du Hub et la Gateway du réseau Podman."""
+    info = {'ip': '127.0.0.1', 'gateway': '127.0.0.1'}
     try:
-        # On n'a pas besoin de se connecter réellement, c'est juste pour router l'IP
+        # 1. Obtenir l'IP de la Gateway par défaut (le bridge Podman)
+        gws = netifaces.gateways()
+        if 'default' in gws and netifaces.AF_INET in gws['default']:
+            info['gateway'] = gws['default'][netifaces.AF_INET][0]
+
+        # 2. Obtenir l'IP interne du Hub
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 1))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = '127.0.0.1'
-    finally:
+        info['ip'] = s.getsockname()[0]
         s.close()
-    return ip
+    except Exception as e:
+        print(f"Erreur détection réseau : {e}")
+    return info
+
+
+network_info = get_dynamic_network_info()
 
 
 # --- 1. CONFIGURATION RÉSEAU GÉNÉRALE ---
@@ -36,6 +45,9 @@ c.JupyterHub.hub_port = 8888
 c.JupyterHub.hub_connect_ip = 'jupyterhub'
 
 # --- 2. CONFIGURATION DE LA COLLABORATION (TORNADO) ---
+c.JupyterHub.allow_origin = '*'
+c.JupyterHub.bind_url = 'http://:8000'
+c.JupyterHub.trust_x_forwarded_headers = True
 c.JupyterHub.tornado_settings = {
     'headers': {
         'Content-Security-Policy': "frame-ancestors 'self' *",
@@ -72,9 +84,11 @@ c.DockerSpawner.args.extend([
     '--LabApp.collaborative=True',
     '--ContentsManager.allow_hidden=True'
 ])
-hub_ip_dynamique = get_hub_ip()
-c.JupyterHub.trusted_proxies = [hub_ip_dynamique, 'traefik']
-
+c.JupyterHub.trusted_proxies = [
+    network_info['ip'],
+    network_info['gateway'],
+    'traefik'
+]
 # --- 4. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
 c.DockerSpawner.image = 'dslab-collab:latest'
