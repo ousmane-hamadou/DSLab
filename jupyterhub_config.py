@@ -1,5 +1,6 @@
 import os
 import sqlite3
+
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
 
@@ -55,9 +56,8 @@ c.DockerSpawner.use_internal_ip = True
 # Options spécifiques pour Podman et la stabilité
 c.DockerSpawner.extra_host_config = {
     "network_mode": network_name,
-    "userns_mode": "keep-id"  # Maintient l'UID pour les permissions workspaces
 }
-
+c.DockerSpawner.extra_create_kwargs = {'user': '1001:1001'}
 c.DockerSpawner.remove = True  # Nettoie le conteneur à l'arrêt
 c.Spawner.start_timeout = 300
 c.Spawner.http_timeout = 180
@@ -107,6 +107,12 @@ async def pre_spawn_hook(spawner):
     spawner.environment = {
         "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
         "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api"
+    }
+
+    spawner.volumes = {
+        # Le Z est vital ici
+        user_workdir: {"bind": "/home/jovyan/work", "mode": "Z"},
+        "/opt/ds_shared_libs": {"bind": "/opt/shared", "mode": "ro"}
     }
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
