@@ -50,6 +50,30 @@ c.JupyterHub.allow_origin = '*'
 c.JupyterHub.bind_url = 'http://:8000'
 c.JupyterHub.trust_x_forwarded_headers = True
 c.JupyterHub.subdomain_host = 'https://unpressured-abrielle-coroneted.ngrok-free.dev'
+
+# --- AJUSTEMENT COLLABORATION & API ---
+
+# Autorise les services (RTC) à lire les infos utilisateur
+c.JupyterHub.services = [
+    {
+        'name': 'jupyter_collaboration',
+        'api_token': os.environ.get('JUPYTERHUB_API_TOKEN', 'un-token-tres-long-et-secret'),
+    }
+]
+
+c.JupyterHub.load_roles = [
+    {
+        "name": "collaboration-access",
+        "scopes": ["access:servers", "read:users", "read:users:name", "read:groups"],
+        "services": ["jupyter_collaboration"],
+    },
+    {
+        "name": "user",
+        "scopes": ["self", "access:servers"],
+        "users": [u for u in c.Authenticator.admin_users]
+    }
+]
+
 c.JupyterHub.tornado_settings = {
     'headers': {
         'Content-Security-Policy': "frame-ancestors 'self' *",
@@ -58,7 +82,9 @@ c.JupyterHub.tornado_settings = {
     'cookie_options': {
         'SameSite': 'None',
         'Secure': True
-    }
+    },
+    'check_xsrf': False
+
 }
 
 # --- 3. AUTHENTIFICATION CUSTOM ---
@@ -192,6 +218,9 @@ async def pre_spawn_hook(spawner):
         "JUPYTERHUB_CLIENT_ID": f"jupyterhub-user-{user_uuid}",
         "JUPYTER_IP": "0.0.0.0"
     }
+    spawner.environment.update({
+        "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
+    })
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
 c.JupyterHub.shutdown_on_logout = True
