@@ -113,8 +113,8 @@ async def pre_spawn_hook(spawner):
         "NB_UID": "1000",
         "NB_GID": "100",
         "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
-        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8081/hub/api",
-        "JUPYTERHUB_API_URL": "http://jupyterhub:8081/hub/api",
+        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8888/hub/api",
+        "JUPYTERHUB_API_URL": "http://jupyterhub:8888/hub/api",
         "JUPYTERHUB_CLIENT_ID": f"jupyterhub-user-{user_uuid}",
         "JUPYTER_IP": "0.0.0.0"
     }
@@ -128,7 +128,7 @@ c.JupyterHub.services = [
         'admin': True,
         'command': [
             'python3', '-m', 'jupyterhub_idle_culler',
-            '--url=http://127.0.0.1:8081/hub/api',
+            '--url=http://127.0.0.1:8888/hub/api',
             '--timeout=1800',
         ],
     }
