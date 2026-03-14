@@ -51,7 +51,8 @@ c.DockerSpawner.client_kwargs = {
 # Configuration du réseau dslab-net
 network_name = 'dslab-net'
 c.DockerSpawner.network_name = network_name
-c.DockerSpawner.hub_connect_ip = network_name
+# c.DockerSpawner.hub_connect_ip = network_name
+c.DockerSpawner.hub_connect_url = 'http://jupyterhub:8888/hub/api'
 c.DockerSpawner.args = ['--ip=0.0.0.0']
 c.DockerSpawner.use_internal_ip = True
 
