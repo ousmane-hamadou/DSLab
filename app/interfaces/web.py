@@ -208,6 +208,7 @@ async def logout(request: Request):
 
 @app.get("/session/{user_uuid}")
 async def user_session_access(
+    request: Request,
     user_uuid: str,
     service: ManageUserRequest = Depends(get_user_service)
 ):
@@ -219,14 +220,10 @@ async def user_session_access(
             detail="Accès refusé. Lien invalide ou demande non approuvée."
         )
 
-    # On récupère l'URL publique (ngrok) configurée dans le service
-    # Exemple : https://abcd-123.ngrok-free.app
-    public_url = service.ngrok_url
+    host = request.headers.get("host")
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
 
-    # Redirection via le tunnel public.
-    # Traefik verra passer "/hub" et l'enverra au conteneur JupyterHub.
-    # hub_url = f"{public_url}/hub/spawn?username={user_uuid}"
-    # next_url = "/hub/spawn"
-    # hub_url = f"{public_url}/hub/login?username={user_uuid}&next={next_url}"
-    hub_url = f"{public_url}/hub/login?username={user_uuid}"
+    current_base_url = f"{scheme}://{host}"
+
+    hub_url = f"{current_base_url}/hub/login?username={user_uuid}"
     return RedirectResponse(url=hub_url)
