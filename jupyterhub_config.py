@@ -49,7 +49,8 @@ c.JupyterHub.hub_connect_ip = 'jupyterhub'
 c.JupyterHub.allow_origin = '*'
 c.JupyterHub.bind_url = 'http://:8000'
 c.JupyterHub.trust_x_forwarded_headers = True
-c.JupyterHub.subdomain_host = 'https://unpressured-abrielle-coroneted.ngrok-free.dev'
+c.JupyterHub.subdomain_host = ''
+c.JupyterHub.base_url = '/'
 
 # --- AJUSTEMENT COLLABORATION & API ---
 
@@ -112,14 +113,10 @@ class MyAuthenticator(DummyAuthenticator):
 
 
 c.JupyterHub.authenticator_class = MyAuthenticator
-
-
-c.JupyterHub.authenticator_class = MyAuthenticator
 c.Authenticator.auto_login = True
 c.Authenticator.allow_all = True
 c.Authenticator.any_allow_config = True
 c.Authenticator.allow_existing_users = True
-c.Authenticator.admin_users = {'lisa'}
 c.JupyterHub.allow_named_servers = False
 c.DockerSpawner.args.extend([
     '--LabApp.collaborative=True',
