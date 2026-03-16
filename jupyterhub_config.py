@@ -70,15 +70,23 @@ c.JupyterHub.load_roles = [
     }
 ]
 
+cookie_options = {
+    'SameSite': 'Lax',
+    'Secure': False
+}
+
+if c.JupyterHub.trust_x_forwarded_headers:
+    cookie_options.update({
+        'SameSite': 'None',  # Nécessaire pour les iframes et le cross-site via Ngrok
+        'Secure': True      # Obligatoire si SameSite='None'
+    })
+
 c.JupyterHub.tornado_settings = {
     'headers': {
         'Content-Security-Policy': "frame-ancestors 'self' *",
         'Access-Control-Allow-Origin': '*'
     },
-    'cookie_options': {
-        'SameSite': 'None',
-        'Secure': True
-    },
+    'cookie_options': cookie_options,
     'check_xsrf': False
 }
 

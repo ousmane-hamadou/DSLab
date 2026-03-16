@@ -32,6 +32,8 @@ services:
       - "traefik.http.routers.dslab.rule=PathPrefix(`/`)"
       - "traefik.http.routers.dslab.entrypoints=web"
       - "traefik.http.services.dslab.loadbalancer.server.port=8090"
+      - "traefik.http.middlewares.ssl-header.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.dslab.middlewares=ssl-header"
 
   jupyterhub:
     # On peut aussi conteneuriser JupyterHub ou le laisser sur l'hôte

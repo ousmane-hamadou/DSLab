@@ -1,5 +1,3 @@
-from fastapi.responses import RedirectResponse
-from fastapi import Depends, HTTPException, status
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -7,7 +5,7 @@ from typing import Optional
 
 import jwt
 from fastapi import (Cookie, Depends, FastAPI, Form, HTTPException, Request,
-                     Response)
+                     Response, status)
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -97,6 +95,7 @@ async def login_page(request: Request):
 
 @app.post("/login")
 async def login(
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
@@ -108,13 +107,17 @@ async def login(
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
 
     response = RedirectResponse(url="/admin", status_code=303)
-    # Sécurisation du cookie pour le tunnel ngrok
+
+    # On vérifie si on est en HTTPS (via Ngrok) ou HTTP (Local)
+    is_https = request.url.scheme == "https" or request.headers.get(
+        "x-forwarded-proto") == "https"
+
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        secure=True,   # Obligatoire pour HTTPS (ngrok)
-        samesite="lax"
+        secure=is_https,
+        samesite="lax" if not is_https else "none"
     )
     return response
 
@@ -183,17 +186,18 @@ async def create_new_admin(
 
 
 @app.get("/logout")
-async def logout(response: Response):
+async def logout(request: Request):
     # On crée une redirection vers l'accueil
     redirect = RedirectResponse(url="/", status_code=303)
+    is_https = request.url.scheme == "https" or request.headers.get(
+        "x-forwarded-proto") == "https"
 
-    # On supprime le cookie contenant le token (nommé 'access_token' par convention)
-    # Assure-toi que le nom correspond à celui utilisé lors du login
     redirect.delete_cookie(
         key="access_token",
         path="/",        # Important pour supprimer le cookie sur tout le domaine
         httponly=True,   # Sécurité contre XSS
-        samesite="lax"
+        samesite="lax" if not is_https else "none",
+        secure=is_https,
     )
 
     print("Déconnexion réussie : Cookie supprimé.")
