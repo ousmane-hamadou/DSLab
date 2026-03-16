@@ -53,13 +53,8 @@ c.JupyterHub.subdomain_host = 'https://unpressured-abrielle-coroneted.ngrok-free
 
 # --- AJUSTEMENT COLLABORATION & API ---
 
-# Autorise les services (RTC) à lire les infos utilisateur
-c.JupyterHub.services = [
-    {
-        'name': 'jupyter_collaboration',
-        'api_token': os.environ.get('JUPYTERHUB_API_TOKEN', 'un-token-tres-long-et-secret'),
-    }
-]
+admin_list = {'lisa'}
+c.Authenticator.admin_users = admin_list
 
 c.JupyterHub.load_roles = [
     {
@@ -70,7 +65,7 @@ c.JupyterHub.load_roles = [
     {
         "name": "user",
         "scopes": ["self", "access:servers"],
-        "users": [u for u in c.Authenticator.admin_users]
+        "users": list(admin_list)
     }
 ]
 
@@ -84,7 +79,6 @@ c.JupyterHub.tornado_settings = {
         'Secure': True
     },
     'check_xsrf': False
-
 }
 
 # --- 3. AUTHENTIFICATION CUSTOM ---
@@ -126,7 +120,7 @@ c.Authenticator.allow_all = True
 c.Authenticator.any_allow_config = True
 c.Authenticator.allow_existing_users = True
 c.Authenticator.admin_users = {'lisa'}
-c.JupyterHub.allow_named_servers = True
+c.JupyterHub.allow_named_servers = False
 c.DockerSpawner.args.extend([
     '--LabApp.collaborative=True',
     '--ContentsManager.allow_hidden=True'
@@ -226,6 +220,10 @@ c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
 c.JupyterHub.shutdown_on_logout = True
 # --- 5. SERVICES : IDLE CULLER ---
 c.JupyterHub.services = [
+    {
+        'name': 'jupyter_collaboration',
+        'api_token': os.environ.get('JUPYTERHUB_API_TOKEN', '3e3076d69391ac3a8ce9bec643f543d3865bf206e63677fdab4aec6857c60416'),
+    },
     {
         'name': 'cull-idle',
         'admin': True,
