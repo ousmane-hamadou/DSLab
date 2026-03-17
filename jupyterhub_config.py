@@ -2,6 +2,7 @@ import os
 import socket
 import sqlite3
 from urllib.parse import parse_qs, unquote, urlparse
+
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
 
@@ -47,6 +48,9 @@ cookie_options = {
     'SameSite': 'Lax',
     'Secure': False
 }
+
+if "https" in str(c.JupyterHub.bind_url):
+    cookie_options.update({'SameSite': 'None', 'Secure': True})
 
 # On injecte les réglages dans tornado_settings au lieu de c.JupyterHub directement
 c.JupyterHub.tornado_settings = {
@@ -123,6 +127,7 @@ c.DockerSpawner.extra_host_config = {"network_mode": network_name}
 c.DockerSpawner.extra_create_kwargs = {'user': '0'}
 c.DockerSpawner.remove = True
 c.Spawner.start_timeout = 300
+c.Spawner.http_timeout = 180
 
 # --- 5. PRE-SPAWN HOOK (LIMITES & VOLUMES) ---
 
@@ -160,7 +165,10 @@ async def pre_spawn_hook(spawner):
         "NB_GID": "100",
         "CHOWN_HOME": "yes",
         "CHOWN_HOME_OPTS": "-R",
-        "JUPYTER_IP": "0.0.0.0"
+        "JUPYTER_IP": "0.0.0.0",
+        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8888/hub/api",
+        "JUPYTERHUB_API_URL": "http://jupyterhub:8888/hub/api",
+        "JUPYTERHUB_CLIENT_ID": f"jupyterhub-user-{user_uuid}",
     }
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
