@@ -31,3 +31,7 @@ logs/
 # IDEs
 .vscode/
 .idea/
+
+# Ajoute ceci à ton .gitignore
+dslab.key
+dslab.crt

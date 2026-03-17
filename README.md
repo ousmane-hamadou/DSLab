@@ -2,6 +2,28 @@
 
 Ce projet déploie une infrastructure complète de gestion de travaux pratiques basée sur **JupyterHub**, **FastAPI** et **Traefik**, le tout orchestré par **Podman** sur un environnement Rootless (Fedora).
 
+## Installation Rapide (Nouveau)
+
+### 1. Préparer l'environnement
+
+Ce script vérifie les dépendances, crée les répertoires nécessaires et configure les labels SELinux.
+
+```bash
+chmod +x configure_env.sh
+./configure_env.sh
+```
+
+### 2. Lancer l'infrastructure
+
+Ce script génère les certificats SSL s'ils manquent, reconstruit les images et démarre le tunnel Ngrok.
+
+```bash
+chmod +x start_dslab.sh
+./start_dslab.sh
+```
+
+---
+
 ## 🚀 Composants de l'Infrastructure
 
 L'architecture repose sur trois conteneurs principaux :
@@ -175,3 +197,23 @@ chcon -Rt container_file_t /home/lisa/DSLab
 ```
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [DSLab - Infrastructure de Calcul pour Étudiants](#dslab---infrastructure-de-calcul-pour-étudiants)
+  - [Installation Rapide (Nouveau)](#installation-rapide-nouveau)
+    - [1. Préparer l'environnement](#1-préparer-lenvironnement)
+    - [2. Lancer l'infrastructure](#2-lancer-linfrastructure)
+  - [🚀 Composants de l'Infrastructure](#-composants-de-linfrastructure)
+  - [🛠 Prérequis Serveur (Fedora/RHEL)](#-prérequis-serveur-fedorarhel)
+  - [🌐 Configuration de Ngrok](#-configuration-de-ngrok)
+  - [📁 Création des Volumes et Persistance](#-création-des-volumes-et-persistance)
+    - [Identification du matériel](#identification-du-matériel)
+    - [Création et Formatage des Volumes Logiques](#création-et-formatage-des-volumes-logiques)
+    - [Montage Permanent (/etc/fstab)](#montage-permanent-etcfstab)
+    - [Correction des Permissions & SELinux](#correction-des-permissions--selinux)
+    - [Création de l'espace de stockage sur l'hôte](#création-de-lespace-de-stockage-sur-lhôte)
+    - [Initialisation de l'environnement Python Partagé](#initialisation-de-lenvironnement-python-partagé)
+
+<!-- /code_chunk_output -->
+
