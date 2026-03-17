@@ -117,7 +117,8 @@ async def login(
         value=token,
         httponly=True,
         secure=is_https,
-        samesite="lax" if not is_https else "none"
+        samesite="lax" if not is_https else "none",
+        path="/"
     )
     return response
 
@@ -221,7 +222,12 @@ async def user_session_access(
         )
 
     host = request.headers.get("host")
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    x_proto = request.headers.get("x-forwarded-proto")
+
+    if x_proto == "https":
+        scheme = "https"
+    else:
+        scheme = "http"
 
     current_base_url = f"{scheme}://{host}"
 
