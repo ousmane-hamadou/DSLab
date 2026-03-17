@@ -61,7 +61,7 @@ c.JupyterHub.tornado_settings = {
     'check_xsrf': False,
     'xsrf_cookies': False,
 }
-
+c.JupyterHub.cookie_options = {'SameSite': 'Lax', 'Secure': False}
 # --- 3. AUTHENTIFICATION & RÔLES ---
 admin_list = {'lisa'}
 c.Authenticator.admin_users = admin_list
@@ -124,7 +124,9 @@ c.DockerSpawner.args = [
     '--LabApp.check_xsrf=False',
     '--ServerApp.cookie_options={"SameSite": "Lax", "Secure": False}',
     '--ServerApp.token=""',
-    '--ServerApp.password=""'
+    '--ServerApp.password=""',
+    '--ServerApp.allow_origin="*"',
+    '--ServerApp.authenticate_prometheus=False'
 ]
 c.JupyterHub.cookie_secret = bytes.fromhex(
     'c33076d69391ac3a8ce9bec643f543d3865bf206e63677fdab4aec6857c60416')
@@ -178,9 +180,6 @@ async def pre_spawn_hook(spawner):
         "CHOWN_HOME": "yes",
         "CHOWN_HOME_OPTS": "-R",
         "JUPYTER_IP": "0.0.0.0",
-        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8888/hub/api",
-        "JUPYTERHUB_API_URL": "http://jupyterhub:8888/hub/api",
-        "JUPYTERHUB_CLIENT_ID": f"jupyterhub-user-{user_uuid}",
     }
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
