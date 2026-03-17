@@ -50,9 +50,6 @@ cookie_options = {
     'Secure': False
 }
 
-if "https" in str(c.JupyterHub.bind_url):
-    cookie_options.update({'SameSite': 'None', 'Secure': True})
-
 # On injecte les réglages dans tornado_settings au lieu de c.JupyterHub directement
 c.JupyterHub.tornado_settings = {
     'headers': {
@@ -125,7 +122,9 @@ c.DockerSpawner.args = [
     '--ContentsManager.allow_hidden=True',
     '--ServerApp.disable_check_xsrf=True',
     '--LabApp.check_xsrf=False',
-    '--ServerApp.cookie_options={"SameSite": "Lax", "Secure": False}'
+    '--ServerApp.cookie_options={"SameSite": "Lax", "Secure": False}',
+    '--ServerApp.token=""',
+    '--ServerApp.password=""'
 ]
 c.JupyterHub.cookie_secret = bytes.fromhex(
     'c33076d69391ac3a8ce9bec643f543d3865bf206e63677fdab4aec6857c60416')
