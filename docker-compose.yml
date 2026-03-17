@@ -36,9 +36,8 @@ services:
     networks:
       - dslab-net
     labels:
-      # - "traefik.http.routers.api.rule=PathPrefix(`/`) && !PathPrefix(`/hub`) && !PathPrefix(`/user`)"
       - "traefik.enable=true"
-      - "traefik.http.routers.dslab.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.dslab.rule=Host(`localhost`) && !PathPrefix(`/hub`) && !PathPrefix(`/user`)"
       - "traefik.http.routers.dslab.entrypoints=websecure"
       - "traefik.http.routers.dslab.tls=true"
       - "traefik.http.services.dslab.loadbalancer.server.port=8090"
