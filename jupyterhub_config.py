@@ -61,7 +61,8 @@ c.JupyterHub.tornado_settings = {
     },
     'trust_x_forwarded': True,  # Correction de trust_x_forwarded_headers
     'cookie_options': cookie_options,
-    'check_xsrf': False
+    'check_xsrf': False,
+    'xsrf_cookies': False,
 }
 
 # --- 3. AUTHENTIFICATION & RÔLES ---
@@ -121,7 +122,9 @@ c.DockerSpawner.args = [
     '--ip=0.0.0.0',
     '--port=8888',
     '--LabApp.collaborative=True',
-    '--ContentsManager.allow_hidden=True'
+    '--ContentsManager.allow_hidden=True',
+    '--ServerApp.disable_check_xsrf=True',
+    '--LabApp.check_xsrf=False'
 ]
 c.JupyterHub.trusted_proxies = [
     network_info['ip'],
