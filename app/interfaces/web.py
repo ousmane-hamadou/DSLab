@@ -59,8 +59,7 @@ def get_user_service(db: Session = Depends(get_db)):
     - MailService : pour l'envoi des notifications SMTP.
     - NGROK_URL : pour générer les liens de session.
     """
-    # 1. Récupération de l'URL du tunnel depuis l'environnement
-    ngrok_url = os.getenv("NGROK_URL", "http://localhost:8000")
+    ngrok_url = os.getenv("NGROK_URL", "https://localhost:8443")
 
     # 2. Initialisation des composants d'infrastructure
     repository = SqlAlchemyRepository(db)
@@ -108,16 +107,12 @@ async def login(
 
     response = RedirectResponse(url="/admin", status_code=303)
 
-    # On vérifie si on est en HTTPS (via Ngrok) ou HTTP (Local)
-    is_https = request.url.scheme == "https" or request.headers.get(
-        "x-forwarded-proto") == "https"
-
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        secure=is_https,
-        samesite="lax" if not is_https else "none",
+        secure=True,
+        samesite="none",
         path="/"
     )
     return response
@@ -190,15 +185,13 @@ async def create_new_admin(
 async def logout(request: Request):
     # On crée une redirection vers l'accueil
     redirect = RedirectResponse(url="/", status_code=303)
-    is_https = request.url.scheme == "https" or request.headers.get(
-        "x-forwarded-proto") == "https"
 
     redirect.delete_cookie(
         key="access_token",
-        path="/",        # Important pour supprimer le cookie sur tout le domaine
-        httponly=True,   # Sécurité contre XSS
-        samesite="lax" if not is_https else "none",
-        secure=is_https,
+        path="/",
+        httponly=True,
+        samesite="none",
+        secure=True,
     )
 
     print("Déconnexion réussie : Cookie supprimé.")
@@ -222,14 +215,7 @@ async def user_session_access(
         )
 
     host = request.headers.get("host")
-    x_proto = request.headers.get("x-forwarded-proto")
-
-    if x_proto == "https":
-        scheme = "https"
-    else:
-        scheme = "http"
-
-    current_base_url = f"{scheme}://{host}"
+    current_base_url = f"https://{host}"
 
     hub_url = f"{current_base_url}/hub/login?username={user_uuid}"
     return RedirectResponse(url=hub_url)
