@@ -1,4 +1,4 @@
-.PHONY: up down restart logs
+.PHONY: up down restart logs clean-jupyter
 
 up:
 	./start_dslab.sh
@@ -9,5 +9,13 @@ down:
 logs:
 	podman-compose logs -f
 
-restart:
-	podman-compose down && ./start_dslab.sh
+clean-jupyter:
+	@echo "🧹 Nettoyage des sessions Jupyter orphelines..."
+	podman rm -f $$(podman ps -aq --filter name=jupyter-) 2>/dev/null || true
+
+restart: down clean-jupyter
+	@echo "🔄 Redémarrage de l'infrastructure..."
+	./start_dslab.sh
+
+logs:
+	podman-compose logs -f

@@ -53,6 +53,7 @@ if [ ! -f "$DB_PATH" ]; then
 fi
 
 # 5. Permissions sur la socket Podman (Rootless)
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
 echo "🔌 Vérification de la socket Podman..."
 if [ -S "$XDG_RUNTIME_DIR/podman/podman.sock" ]; then
     echo "✅ Socket Podman détectée."
