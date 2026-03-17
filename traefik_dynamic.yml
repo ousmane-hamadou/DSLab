@@ -2,3 +2,8 @@ tls:
   certificates:
     - certFile: /etc/traefik/dslab.crt
       keyFile: /etc/traefik/dslab.key
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/dslab.crt
+        keyFile: /etc/traefik/dslab.key
