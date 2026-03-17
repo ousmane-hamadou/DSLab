@@ -6,14 +6,23 @@ services:
     networks:
       - dslab-net
     command:
-      # - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:8080"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirection auto HTTP -> HTTPS
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
     ports:
-      - "8080:8080" # On mappe le port 80 (web) du conteneur sur le 8080 de l'hôte
+      - "80:80"
+      - "443:443"
     volumes:
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
+      - ./dslab.crt:/etc/traefik/dslab.crt:ro
+      - ./dslab.key:/etc/traefik/dslab.key:ro
+      - ./traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro
+    labels:
+      - "traefik.http.providers.file.filename=/etc/traefik/traefik_dynamic.yml"
 
   dslab-web:
     build: .
@@ -30,10 +39,9 @@ services:
       # - "traefik.http.routers.api.rule=PathPrefix(`/`) && !PathPrefix(`/hub`) && !PathPrefix(`/user`)"
       - "traefik.enable=true"
       - "traefik.http.routers.dslab.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.dslab.entrypoints=web"
+      - "traefik.http.routers.dslab.entrypoints=websecure"
+      - "traefik.http.routers.dslab.tls=true"
       - "traefik.http.services.dslab.loadbalancer.server.port=8090"
-      - "traefik.http.middlewares.ssl-header.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.dslab.middlewares=ssl-header"
 
   jupyterhub:
     # On peut aussi conteneuriser JupyterHub ou le laisser sur l'hôte
@@ -49,10 +57,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.hub.rule=PathPrefix(`/hub`) || PathPrefix(`/user`)"
+      - "traefik.http.routers.hub.entrypoints=websecure"
       - "traefik.http.services.hub.loadbalancer.server.port=8000"
-      - "traefik.http.routers.hub.middlewares=hub-shared-config"
-      - "traefik.http.middlewares.hub-shared-config.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.hub-shared-config.headers.accesscontrolalloworiginlist=*"
     volumes:
       - /home/lisa/DSLab/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:z
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z

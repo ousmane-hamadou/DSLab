@@ -43,22 +43,15 @@ c.JupyterHub.bind_url = 'http://:8000'
 c.JupyterHub.subdomain_host = ''  # Désactivé pour éviter les erreurs SSL wildcard
 c.JupyterHub.base_url = '/'
 
-# Configuration adaptative des cookies
-cookie_options = {
-    'SameSite': 'Lax',
-    'Secure': False
-}
-
 # On injecte les réglages dans tornado_settings au lieu de c.JupyterHub directement
+
 c.JupyterHub.tornado_settings = {
     'headers': {
         'Content-Security-Policy': "frame-ancestors 'self' *",
         'Access-Control-Allow-Origin': '*'
     },
     'trust_x_forwarded': True,  # Correction de trust_x_forwarded_headers
-    'cookie_options': cookie_options,
-    'check_xsrf': False,
-    'xsrf_cookies': False,
+    'cookie_options': {'SameSite': 'None', 'Secure': True},
 }
 # --- 3. AUTHENTIFICATION & RÔLES ---
 admin_list = {'lisa'}
@@ -117,14 +110,9 @@ c.DockerSpawner.args = [
     '--ip=0.0.0.0',
     '--port=8888',
     '--LabApp.collaborative=True',
-    '--ContentsManager.allow_hidden=True',
     '--ServerApp.disable_check_xsrf=True',
-    '--LabApp.check_xsrf=False',
-    '--ServerApp.cookie_options={"SameSite": "Lax", "Secure": False}',
-    '--ServerApp.token=""',
-    '--ServerApp.password=""',
+    '--ServerApp.cookie_options={"SameSite": "None", "Secure": True}',
     '--ServerApp.allow_origin="*"',
-    '--ServerApp.authenticate_prometheus=False'
 ]
 c.JupyterHub.cookie_secret = bytes.fromhex(
     'c33076d69391ac3a8ce9bec643f543d3865bf206e63677fdab4aec6857c60416')
