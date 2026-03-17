@@ -39,7 +39,7 @@ c.JupyterHub.hub_connect_ip = 'jupyterhub'
 c.JupyterHub.forwarded_host_header = 'X-Forwarded-Host'
 
 # --- 2. SÉCURITÉ & TORNADO (CORRECTIF DES WARNINGS) ---
-c.JupyterHub.bind_url = 'http://:8000'
+c.JupyterHub.bind_url = 'http://0.0.0.0:8000'
 c.JupyterHub.subdomain_host = ''  # Désactivé pour éviter les erreurs SSL wildcard
 c.JupyterHub.base_url = '/'
 

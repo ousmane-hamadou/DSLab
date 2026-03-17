@@ -55,9 +55,12 @@ services:
              jupyterhub -f /srv/jupyterhub/jupyterhub_config.py"
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.hub.priority=100"
       - "traefik.http.routers.hub.rule=PathPrefix(`/hub`) || PathPrefix(`/user`)"
       - "traefik.http.routers.hub.entrypoints=websecure"
+      - "traefik.http.routers.hub.tls=true"
       - "traefik.http.services.hub.loadbalancer.server.port=8000"
+      - "traefik.http.services.hub.loadbalancer.server.scheme=http"
     volumes:
       - /home/lisa/DSLab/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:z
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:z
