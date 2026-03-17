@@ -112,7 +112,7 @@ c.DockerSpawner.client_kwargs = {'base_url': 'unix:///var/run/docker.sock'}
 
 network_name = 'dslab-net'
 c.DockerSpawner.network_name = network_name
-c.DockerSpawner.hub_connect_url = 'http://jupyterhub:8888/hub/api'
+c.DockerSpawner.hub_connect_url = 'http://jupyterhub:8888'
 c.DockerSpawner.use_internal_ip = True
 
 # Activation de la collaboration (RTC) dans les notebooks
