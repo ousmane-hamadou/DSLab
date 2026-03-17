@@ -42,6 +42,7 @@ c.JupyterHub.forwarded_host_header = 'X-Forwarded-Host'
 c.JupyterHub.bind_url = 'http://:8000'
 c.JupyterHub.subdomain_host = ''  # Désactivé pour éviter les erreurs SSL wildcard
 c.JupyterHub.base_url = '/'
+c.JupyterHub.allowed_hostnames = set()
 
 # Configuration adaptative des cookies
 cookie_options = {
@@ -122,6 +123,12 @@ c.DockerSpawner.args = [
     '--LabApp.collaborative=True',
     '--ContentsManager.allow_hidden=True'
 ]
+c.JupyterHub.trusted_proxies = [
+    network_info['ip'],
+    network_info['gateway'],
+    'traefik'
+]
+c.JupyterHub.redirect_to_server = True
 
 c.DockerSpawner.extra_host_config = {"network_mode": network_name}
 c.DockerSpawner.extra_create_kwargs = {'user': '0'}
