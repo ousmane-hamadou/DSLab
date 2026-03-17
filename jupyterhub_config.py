@@ -2,25 +2,20 @@ import os
 import socket
 import sqlite3
 from urllib.parse import parse_qs, unquote, urlparse
-
 import netifaces
 from jupyterhub.auth import DummyAuthenticator
 
 c = get_config()
 
-# Récupérer dynamiquement l'IP interne du conteneur JupyterHub
+# --- 0. RÉCUPÉRATION RÉSEAU ---
 
 
 def get_dynamic_network_info():
-    """Récupère l'IP du Hub et la Gateway du réseau Podman."""
     info = {'ip': '127.0.0.1', 'gateway': '127.0.0.1'}
     try:
-        # 1. Obtenir l'IP de la Gateway par défaut (le bridge Podman)
         gws = netifaces.gateways()
         if 'default' in gws and netifaces.AF_INET in gws['default']:
             info['gateway'] = gws['default'][netifaces.AF_INET][0]
-
-        # 2. Obtenir l'IP interne du Hub
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 1))
         info['ip'] = s.getsockname()[0]
@@ -32,28 +27,39 @@ def get_dynamic_network_info():
 
 network_info = get_dynamic_network_info()
 
-
 # --- 1. CONFIGURATION RÉSEAU GÉNÉRALE ---
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = 8000
-
-
-# Port pour l'API interne (Communication Hub <-> Notebooks)
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.hub_port = 8888
-
-# On utilise l'alias défini dans docker-compose au lieu d'une IP fixe
 c.JupyterHub.hub_connect_ip = 'jupyterhub'
 
-# --- 2. CONFIGURATION DE LA COLLABORATION (TORNADO) ---
-c.JupyterHub.allow_origin = '*'
+# Indispensable pour Ngrok/Traefik : fait confiance au Host envoyé par le proxy
+c.JupyterHub.forwarded_host_header = 'X-Forwarded-Host'
+
+# --- 2. SÉCURITÉ & TORNADO (CORRECTIF DES WARNINGS) ---
 c.JupyterHub.bind_url = 'http://:8000'
-c.JupyterHub.trust_x_forwarded_headers = True
-c.JupyterHub.subdomain_host = ''
+c.JupyterHub.subdomain_host = ''  # Désactivé pour éviter les erreurs SSL wildcard
 c.JupyterHub.base_url = '/'
 
-# --- AJUSTEMENT COLLABORATION & API ---
+# Configuration adaptative des cookies
+cookie_options = {
+    'SameSite': 'Lax',
+    'Secure': False
+}
 
+# On injecte les réglages dans tornado_settings au lieu de c.JupyterHub directement
+c.JupyterHub.tornado_settings = {
+    'headers': {
+        'Content-Security-Policy': "frame-ancestors 'self' *",
+        'Access-Control-Allow-Origin': '*'
+    },
+    'trust_x_forwarded': True,  # Correction de trust_x_forwarded_headers
+    'cookie_options': cookie_options,
+    'check_xsrf': False
+}
+
+# --- 3. AUTHENTIFICATION & RÔLES ---
 admin_list = {'lisa'}
 c.Authenticator.admin_users = admin_list
 
@@ -64,48 +70,21 @@ c.JupyterHub.load_roles = [
         "services": ["jupyter_collaboration"],
     },
     {
-        "name": "user",
+        "name": "user-api",
         "scopes": ["self", "access:servers"],
         "users": list(admin_list)
     }
 ]
 
-cookie_options = {
-    'SameSite': 'Lax',
-    'Secure': False
-}
-
-if c.JupyterHub.trust_x_forwarded_headers:
-    cookie_options.update({
-        'SameSite': 'None',  # Nécessaire pour les iframes et le cross-site via Ngrok
-        'Secure': True      # Obligatoire si SameSite='None'
-    })
-
-c.JupyterHub.tornado_settings = {
-    'headers': {
-        'Content-Security-Policy': "frame-ancestors 'self' *",
-        'Access-Control-Allow-Origin': '*'
-    },
-    'cookie_options': cookie_options,
-    'check_xsrf': False
-}
-
-# --- 3. AUTHENTIFICATION CUSTOM ---
-
 
 class MyAuthenticator(DummyAuthenticator):
     async def authenticate(self, handler, data=None):
-        # 1. Tentative directe : ?username=...
         username = handler.get_argument("username", None)
-
-        # 2. Si non trouvé, on fouille dans le paramètre 'next'
         if not username:
             next_url = handler.get_argument("next", None)
             if next_url:
                 decoded_next = unquote(next_url)
-                parsed_next = urlparse(decoded_next)
-                params = parse_qs(parsed_next.query)
-
+                params = parse_qs(urlparse(decoded_next).query)
                 if 'username' in params:
                     username = params['username'][0]
                 elif '/user/' in decoded_next:
@@ -113,72 +92,44 @@ class MyAuthenticator(DummyAuthenticator):
                     username = parts[parts.index('user') + 1]
 
         if username:
-            print(f"--- [AUTH SUCCESS] UUID détecté : {username} ---")
+            print(f"--- [AUTH SUCCESS] UUID : {username} ---", flush=True)
             return {"name": username}
-
-        print("--- [AUTH FAILURE] Aucun UUID trouvé dans l'URL ---")
         return None
 
 
 c.JupyterHub.authenticator_class = MyAuthenticator
 c.Authenticator.auto_login = True
-c.Authenticator.allow_all = True
-c.Authenticator.any_allow_config = True
-c.Authenticator.allow_existing_users = True
-c.JupyterHub.allow_named_servers = False
-c.DockerSpawner.args.extend([
-    '--LabApp.collaborative=True',
-    '--ContentsManager.allow_hidden=True'
-])
-c.JupyterHub.trusted_proxies = [
-    network_info['ip'],
-    network_info['gateway'],
-    'traefik'
-]
-c.JupyterHub.redirect_to_server = True
-# --- 4. CONFIGURATION DU SPAWNER (PODMAN / DOCKERSPAWNER) ---
+c.JupyterHub.shutdown_on_logout = True
+
+# --- 4. CONFIGURATION DU SPAWNER (PODMAN) ---
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
 c.DockerSpawner.image = 'dslab-collab:latest'
+c.DockerSpawner.client_kwargs = {'base_url': 'unix:///var/run/docker.sock'}
 
-# Socket Podman (Standard Fedora Rootless)
-c.DockerSpawner.client_kwargs = {
-    'base_url': 'unix:///var/run/docker.sock'
-}
-
-# Configuration du réseau dslab-net
 network_name = 'dslab-net'
 c.DockerSpawner.network_name = network_name
 c.DockerSpawner.hub_connect_url = 'http://jupyterhub:8888/hub/api'
+c.DockerSpawner.use_internal_ip = True
+
+# Activation de la collaboration (RTC) dans les notebooks
 c.DockerSpawner.args = [
     '--ip=0.0.0.0',
     '--port=8888',
-    '--LabApp.collaborative=True'
+    '--LabApp.collaborative=True',
+    '--ContentsManager.allow_hidden=True'
 ]
-c.DockerSpawner.use_internal_ip = True
 
-# Options spécifiques pour Podman et la stabilité
-c.DockerSpawner.extra_host_config = {
-    "network_mode": network_name,
-}
+c.DockerSpawner.extra_host_config = {"network_mode": network_name}
 c.DockerSpawner.extra_create_kwargs = {'user': '0'}
 c.DockerSpawner.remove = True
 c.Spawner.start_timeout = 300
-c.Spawner.http_timeout = 180
 
-# --- 4. HOOK DE PRÉ-LANCEMENT (DYNAMIQUE) ---
+# --- 5. PRE-SPAWN HOOK (LIMITES & VOLUMES) ---
 
 
 async def pre_spawn_hook(spawner):
-    """Vérifie l'UUID dans la DB et applique les ressources."""
     user_uuid = spawner.user.name
-    print(f"--- SPAWNING START FOR: {user_uuid} ---")
-
-    # Chemin vers la DB montée dans le conteneur Hub
     db_path = "/mnt/db/dslab.db"
-
-    if not os.path.exists(db_path):
-        print(f"ERREUR: Base de données introuvable à {db_path}")
-        raise Exception("Configuration système : Base de données absente.")
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -188,42 +139,33 @@ async def pre_spawn_hook(spawner):
     conn.close()
 
     if not row:
-        raise Exception(
-            f"Accès refusé : L'UUID {user_uuid} n'est pas approuvé.")
+        raise Exception(f"Accès refusé : {user_uuid} non approuvé.")
 
-    # A. Application des limites
     spawner.cpu_limit = float(row[0])
     spawner.mem_limit = row[1]
 
     user_workdir = f"/home/lisa/workspaces/{user_uuid}"
-    if not os.path.exists(user_workdir):
-        os.makedirs(user_workdir, mode=0o755, exist_ok=True)
+    os.makedirs(user_workdir, mode=0o755, exist_ok=True)
 
     spawner.volumes = {
         user_workdir: {"bind": "/home/jovyan/work", "mode": "Z"},
         "/opt/ds_shared_libs": {"bind": "/opt/shared", "mode": "ro"}
     }
 
-    # C. Environnement
     spawner.environment = {
-        "CHOWN_HOME": "yes",       # Active le chown au démarrage
-        "CHOWN_HOME_OPTS": "-R",   # Récursif
-        "NB_USER": "jovyan",       # L'utilisateur final après chown
+        "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
+        "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
+        "NB_USER": "jovyan",
         "NB_UID": "1000",
         "NB_GID": "100",
-        "PYTHONPATH": "/opt/shared/venv/lib/python3.12/site-packages",
-        "JUPYTERHUB_SERVICE_URL": "http://jupyterhub:8888/hub/api",
-        "JUPYTERHUB_API_URL": "http://jupyterhub:8888/hub/api",
-        "JUPYTERHUB_CLIENT_ID": f"jupyterhub-user-{user_uuid}",
+        "CHOWN_HOME": "yes",
+        "CHOWN_HOME_OPTS": "-R",
         "JUPYTER_IP": "0.0.0.0"
     }
-    spawner.environment.update({
-        "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
-    })
 
 c.DockerSpawner.pre_spawn_hook = pre_spawn_hook
-c.JupyterHub.shutdown_on_logout = True
-# --- 5. SERVICES : IDLE CULLER ---
+
+# --- 6. SERVICES ---
 c.JupyterHub.services = [
     {
         'name': 'jupyter_collaboration',
@@ -232,10 +174,6 @@ c.JupyterHub.services = [
     {
         'name': 'cull-idle',
         'admin': True,
-        'command': [
-            'python3', '-m', 'jupyterhub_idle_culler',
-            '--url=http://127.0.0.1:8888/hub/api',
-            '--timeout=1800',
-        ],
+        'command': ['python3', '-m', 'jupyterhub_idle_culler', '--timeout=1800'],
     }
 ]
