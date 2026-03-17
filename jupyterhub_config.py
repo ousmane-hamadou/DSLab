@@ -124,8 +124,11 @@ c.DockerSpawner.args = [
     '--LabApp.collaborative=True',
     '--ContentsManager.allow_hidden=True',
     '--ServerApp.disable_check_xsrf=True',
-    '--LabApp.check_xsrf=False'
+    '--LabApp.check_xsrf=False',
+    '--ServerApp.cookie_options={"SameSite": "Lax", "Secure": False}'
 ]
+c.JupyterHub.cookie_secret = bytes.fromhex(
+    'c33076d69391ac3a8ce9bec643f543d3865bf206e63677fdab4aec6857c60416')
 c.JupyterHub.trusted_proxies = [
     network_info['ip'],
     network_info['gateway'],
